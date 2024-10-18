@@ -1,3 +1,5 @@
+# ROOT URL FOR AUTH: http://<your-api-url>/user
+
 ### 1. User Login
 
 - **Endpoint:** `POST /login`

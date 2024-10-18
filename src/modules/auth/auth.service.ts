@@ -77,11 +77,11 @@ export class AuthService {
             password,
         });
 
-        const { password: _, ...userData } = newUser;
+        const { password: _, id, ...userData } = newUser;
 
         const token = this.jwtService.sign(
             {
-                sub: userData.id,
+                sub: id.toString(),
                 username: userData.username,
                 role: userData.role,
                 isSubscribed: userData.isSubscribed,
