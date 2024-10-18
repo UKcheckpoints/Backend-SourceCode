@@ -132,4 +132,38 @@ describe('AuthService', () => {
             });
         });
     });
+
+    describe('validateCurrentUser', () => {
+        it('should throw UnauthorizedException if token is missing', async () => {
+            await expect(authService.validateCurrentUser(null)).rejects.toThrow(UnauthorizedException);
+            await expect(authService.validateCurrentUser('')).rejects.toThrow(UnauthorizedException);
+        });
+
+        it('should throw UnauthorizedException if user does not exist', async () => {
+            const token = jwtService.sign({ sub: 1 });
+            jwtService.verify = jest.fn().mockReturnValue({ sub: 1 });
+            userRepo.findUserById = jest.fn().mockResolvedValue(null);
+
+            await expect(authService.validateCurrentUser(token)).rejects.toThrow(UnauthorizedException);
+            await expect(userRepo.findUserById).toHaveBeenCalledWith(1);
+        });
+
+        it('should throw UnauthorizedException if token data does not match user data', async () => {
+            const token = jwtService.sign({ sub: 1, username: 'testuser', role: 'user', isSubscribed: true });
+            jwtService.verify = jest.fn().mockReturnValue({ sub: 1, username: 'testuser', role: 'user', isSubscribed: true });
+            userRepo.findUserById = jest.fn().mockResolvedValue({ username: 'differentUser', role: 'admin', isSubscribed: false });
+
+            await expect(authService.validateCurrentUser(token)).rejects.toThrow(UnauthorizedException);
+        });
+
+        it('should return the user if token is valid and matches user data', async () => {
+            const user = { id: 1, username: 'testuser', role: 'user', isSubscribed: true };
+            const token = jwtService.sign({ sub: user.id, username: user.username, role: user.role, isSubscribed: user.isSubscribed });
+            jwtService.verify = jest.fn().mockReturnValue({ sub: user.id, username: user.username, role: user.role, isSubscribed: user.isSubscribed });
+            userRepo.findUserById = jest.fn().mockResolvedValue(user);
+
+            const result = await authService.validateCurrentUser(token);
+            expect(result).toEqual(user);
+        });
+    });
 });

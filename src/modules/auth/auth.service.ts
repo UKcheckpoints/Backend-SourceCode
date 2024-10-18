@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    UnauthorizedException,
+    UnprocessableEntityException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { UserRepository } from "../../comman/repositories/user.repository";
@@ -20,15 +26,21 @@ export class AuthService {
         if (!user) {
             throw new UnauthorizedException("Invalid username. No user found with the provided username.");
         }
-
         const isPasswordValid = password === user.password;
 
         if (!isPasswordValid) {
             throw new UnauthorizedException("Invalid password. Please check your password and try again.");
         }
-
         const { password: _, id, ...userData } = user;
-        const token = this.jwtService.sign({ userData }); // Convert id to string
+        const token = this.jwtService.sign(
+            {
+                sub: id,
+                username: userData.username,
+                role: userData.role,
+                isSubscribed: userData.isSubscribed,
+            },
+            { expiresIn: '7d' } // Set token expiration
+        );
 
         res.cookie('jwt', token, {
             httpOnly: true,
@@ -42,6 +54,7 @@ export class AuthService {
             userData,
         };
     }
+
     async register(registerDto: RegisterDto) {
         const { username, email, password } = registerDto;
 
@@ -66,12 +79,47 @@ export class AuthService {
 
         const { password: _, ...userData } = newUser;
 
-        const token = this.jwtService.sign({ username: userData.username }); // Convert id to string
+        const token = this.jwtService.sign(
+            {
+                sub: userData.id,
+                username: userData.username,
+                role: userData.role,
+                isSubscribed: userData.isSubscribed,
+            },
+            { expiresIn: '7d' }
+        );
 
         return {
             message: 'User registered successfully',
             user: userData,
             token,
         };
+    }
+
+    async validateCurrentUser(token: string) {
+        if (!token) {
+            throw new UnauthorizedException("Token is missing.");
+        }
+
+        try {
+            const { sub, username, role, isSubscribed } = this.jwtService.verify(token);
+            const user = await this.userRepo.findUserById(sub);
+
+            if (!user) {
+                throw new UnauthorizedException('Invalid token: User does not exist.');
+            }
+
+            if (
+                user.username !== username ||
+                user.role !== role ||
+                user.isSubscribed !== isSubscribed
+            ) {
+                throw new UnauthorizedException('Token data does not match user data.');
+            }
+
+            return user;
+        } catch (err) {
+            throw new UnauthorizedException('Invalid token.');
+        }
     }
 }

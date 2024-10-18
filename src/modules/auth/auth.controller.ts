@@ -1,7 +1,8 @@
-import { Body, Controller, HttpStatus, Post, Res, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
-import { Response } from 'express';
+import { Body, Controller, HttpStatus, Post, Req, Res, UnauthorizedException, UnprocessableEntityException, UseGuards } from "@nestjs/common";
+import { Response, Request } from 'express';
 import { RegisterDto, signInDto } from "src/types/auth.types";
 import { AuthService } from "./auth.service";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 
 @Controller('user')
 export class AuthController {
@@ -37,4 +38,19 @@ export class AuthController {
         }
     }
 
+    @Post('validate-jwt')
+    @UseGuards(JwtAuthGuard)
+    async validateJwt(@Req() req: Request, @Res() res: Response) {
+        const token = req.cookies.jwt;
+
+        try {
+            const userData = await this.authServ.validateCurrentUser(token);
+            return res.status(HttpStatus.OK).json({
+                message: 'Token is valid',
+                userData,
+            });
+        } catch (err) {
+            throw new UnauthorizedException('Invalid token.');
+        }
+    }
 }
