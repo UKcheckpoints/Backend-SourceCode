@@ -1,6 +1,6 @@
-import { Body, Controller, Post, Res, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
+import { Body, Controller, HttpStatus, Post, Res, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
 import { Response } from 'express';  // Import the Response type from express
-import { signInDto } from "src/types/auth.types";
+import { RegisterDto, signInDto } from "src/types/auth.types";
 import { AuthService } from "./auth.service";
 
 @Controller('user')
@@ -17,5 +17,11 @@ export class AuthController {
             }
             throw new UnauthorizedException("An unexpected error occurred during login.");
         }
+    }
+
+    @Post('register')
+    async register(@Body() data: RegisterDto, @Res() res: Response) {
+        const result = await this.authServ.register(data);
+        res.status(HttpStatus.CREATED).json(result);
     }
 }

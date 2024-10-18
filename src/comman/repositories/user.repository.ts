@@ -6,10 +6,11 @@ import { PrismaService } from '../database/prisma/prisma.service';
 export class UserRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async createUser(data: Omit<UserEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<UserEntity> {
+    async createUser(data: { username: string; email: string; password: string }): Promise<UserEntity> {
         const user = await this.prisma.user.create({
             data: {
                 ...data,
+                role: 'USER',
             },
         });
         return new UserEntity(user);
@@ -29,9 +30,22 @@ export class UserRepository {
         return user ? new UserEntity(user) : null;
     }
 
+    // Find a user by their username
     async findUserByUsername(username: string): Promise<UserEntity | null> {
         const user = await this.prisma.user.findUnique({
             where: { username },
+        });
+        return user ? new UserEntity(user) : null;
+    }
+
+    async findUserByUsernameOrEmail(username: string, email: string): Promise<UserEntity | null> {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username },
+                    { email },
+                ],
+            },
         });
         return user ? new UserEntity(user) : null;
     }

@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
-import { UserRepository } from "src/comman/repositories/user.repository";
-import { signInDto } from "src/types/auth.types";
+import { UserRepository } from "../../comman/repositories/user.repository";
+import { RegisterDto, signInDto } from "../../types/auth.types";
 
 @Injectable()
 export class AuthService {
@@ -40,6 +40,35 @@ export class AuthService {
         return {
             message: "Sign-in successful",
             userData,
+        };
+    }
+
+    async register(registerDto: RegisterDto) {
+        const { username, email, password } = registerDto;
+
+        const existingUser = await this.userRepo.findUserByUsernameOrEmail(username, email);
+        if (existingUser) {
+            throw new ConflictException('Username or email already exists');
+        }
+
+        if (password.length < 8) {
+            throw new BadRequestException('Password must be at least 8 characters long');
+        }
+
+        const newUser = await this.userRepo.createUser({
+            username,
+            email,
+            password,
+        });
+
+        const { password: _, ...userData } = newUser;
+
+        const token = this.jwtService.sign({ userId: newUser.id });
+
+        return {
+            message: 'User registered successfully',
+            user: userData,
+            token,
         };
     }
 }

@@ -16,6 +16,7 @@ describe('UserRepository', () => {
                     user: {
                         create: jest.fn(),
                         findUnique: jest.fn(),
+                        findFirst: jest.fn(),
                         update: jest.fn(),
                         delete: jest.fn(),
                         findMany: jest.fn(),
@@ -33,19 +34,10 @@ describe('UserRepository', () => {
     });
 
     it('should create a new user', async () => {
-        const userData: UserEntity = {
-            id: BigInt(1),
+        const userData = {
             username: 'testuser',
             email: 'test@example.com',
             password: 'password123',
-            role: Role.USER,
-            isSubscribed: false,
-            stripeCustomer: '',
-            freeEnd: true,
-            freeDate: new Date(),
-            interval: 'monthly',
-            createdAt: new Date(),
-            updatedAt: new Date()
         };
 
         const createdUser = {
@@ -68,8 +60,14 @@ describe('UserRepository', () => {
         const result = await userRepository.createUser(userData);
         expect(result).toBeInstanceOf(UserEntity);
         expect(result).toEqual(new UserEntity(createdUser));
-        expect(prismaService.user.create).toHaveBeenCalledWith({ data: userData });
+        expect(prismaService.user.create).toHaveBeenCalledWith({
+            data: {
+                ...userData,
+                role: 'USER',
+            }
+        });
     });
+
 
     it('should find a user by ID', async () => {
         const userId = BigInt(1);
@@ -173,6 +171,56 @@ describe('UserRepository', () => {
         const result = await userRepository.findUserByEmail(email);
         expect(result).toBeNull();
         expect(prismaService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
+    });
+
+    it('should find a user by username or email', async () => {
+        const username = 'testuser';
+        const email = 'test@example.com';
+        const foundUser = {
+            id: BigInt(1),
+            username,
+            email,
+            password: 'password123',
+            role: Role.USER,
+            isSubscribed: false,
+            stripeCustomer: '',
+            freeEnd: true,
+            freeDate: new Date(),
+            interval: 'monthly',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(foundUser);
+
+        const result = await userRepository.findUserByUsernameOrEmail(username, email);
+        expect(result).toBeInstanceOf(UserEntity);
+        expect(result).toEqual(new UserEntity(foundUser));
+        expect(prismaService.user.findFirst).toHaveBeenCalledWith({
+            where: {
+                OR: [
+                    { username },
+                    { email },
+                ],
+            },
+        });
+    });
+
+    it('should return null if user not found by username or email', async () => {
+        const username = 'nonexistentuser';
+        const email = 'nonexistent@example.com';
+        jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(null);
+
+        const result = await userRepository.findUserByUsernameOrEmail(username, email);
+        expect(result).toBeNull();
+        expect(prismaService.user.findFirst).toHaveBeenCalledWith({
+            where: {
+                OR: [
+                    { username },
+                    { email },
+                ],
+            },
+        });
     });
 
     it('should update a user', async () => {
