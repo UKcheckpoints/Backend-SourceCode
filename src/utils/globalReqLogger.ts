@@ -43,7 +43,24 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     }
 
     private prettyPrint(data: any): string {
-        return data && Object.keys(data).length ? JSON.stringify(data, null, 2) : '[Empty]';
+        if (!data || !Object.keys(data).length) return '[Empty]';
+
+        try {
+            return JSON.stringify(data, this.replacer, 2);
+        } catch (error) {
+            return '[Error serializing data]';
+        }
+    }
+
+    private replacer(key: string, value: any) {
+        const seen = new WeakSet();
+        if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+        }
+        return value;
     }
 
     private logWithBorder(title: string, message: string) {

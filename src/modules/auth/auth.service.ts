@@ -17,7 +17,6 @@ export class AuthService {
         }
 
         const user = await this.userRepo.findUserByUsername(username);
-
         if (!user) {
             throw new UnauthorizedException("Invalid username. No user found with the provided username.");
         }
@@ -28,9 +27,10 @@ export class AuthService {
             throw new UnauthorizedException("Invalid password. Please check your password and try again.");
         }
 
-        const { password: _, ...userData } = user;
+        const { password: _, id, ...userData } = user;
+        const token = this.jwtService.sign({ userData }); // Convert id to string
 
-        res.cookie('jwt', this.jwtService.sign({ userData }), {
+        res.cookie('jwt', token, {
             httpOnly: true,
             secure: true,
             sameSite: 'strict',
@@ -42,9 +42,12 @@ export class AuthService {
             userData,
         };
     }
-
     async register(registerDto: RegisterDto) {
         const { username, email, password } = registerDto;
+
+        if (!username || !email || !password) {
+            throw new UnprocessableEntityException("Missing required fields. Please provide valid register to proceed.");
+        }
 
         const existingUser = await this.userRepo.findUserByUsernameOrEmail(username, email);
         if (existingUser) {
@@ -63,7 +66,7 @@ export class AuthService {
 
         const { password: _, ...userData } = newUser;
 
-        const token = this.jwtService.sign({ userId: newUser.id });
+        const token = this.jwtService.sign({ username: userData.username }); // Convert id to string
 
         return {
             message: 'User registered successfully',

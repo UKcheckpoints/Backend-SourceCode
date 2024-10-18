@@ -84,7 +84,6 @@ describe('AuthService', () => {
                 message: 'Sign-in successful',
                 userData: {
                     username: 'testuser',
-                    id: 1,
                     email: 'test@example.com',
                 },
             });
