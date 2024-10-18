@@ -29,6 +29,13 @@ export class UserRepository {
         return user ? new UserEntity(user) : null;
     }
 
+    async findUserByUsername(username: string): Promise<UserEntity | null> {
+        const user = await this.prisma.user.findUnique({
+            where: { username },
+        });
+        return user ? new UserEntity(user) : null;
+    }
+
     async updateUser(id: bigint, data: Partial<UserEntity>): Promise<UserEntity> {
         const user = await this.prisma.user.update({
             where: { id },

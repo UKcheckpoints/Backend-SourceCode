@@ -131,6 +131,41 @@ describe('UserRepository', () => {
         expect(prismaService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
     });
 
+
+    it('should find a user by username', async () => {
+        const username = 'testuser';
+        const foundUser = {
+            id: BigInt(1),
+            username,
+            email: 'test@example.com',
+            password: 'password123',
+            role: Role.USER,
+            isSubscribed: false,
+            stripeCustomer: '',
+            freeEnd: true,
+            freeDate: new Date(),
+            interval: 'monthly',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(foundUser);
+
+        const result = await userRepository.findUserByUsername(username);
+        expect(result).toBeInstanceOf(UserEntity);
+        expect(result).toEqual(new UserEntity(foundUser));
+        expect(prismaService.user.findUnique).toHaveBeenCalledWith({ where: { username } });
+    });
+
+    it('should return null if user not found by username', async () => {
+        const username = 'nonexistentuser';
+        jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(null);
+
+        const result = await userRepository.findUserByUsername(username);
+        expect(result).toBeNull();
+        expect(prismaService.user.findUnique).toHaveBeenCalledWith({ where: { username } });
+    });
+
     it('should return null if user not found by email', async () => {
         const email = 'nonexistent@example.com';
         jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(null);

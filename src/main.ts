@@ -1,12 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import *  as cors from 'cors';
+import * as cors from 'cors';
+import { RequestLoggingInterceptor } from './utils/globalReqLogger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const environment = process.env.NODE?.toLowerCase();
+  if (environment !== 'production' && environment !== 'prod') {
+    app.useGlobalInterceptors(new RequestLoggingInterceptor());
+  }
+
   app.use(cors({
-    origin: process.env.ORIGIN ?? '*'
-  }))
-  await app.listen(process.env.PORT ?? 3000);
+    origin: process.env.ORIGIN || '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  }));
+  const port = Number(process.env.PORT) || 3000;
+  await app.listen(port);
 }
-bootstrap();
+
+bootstrap().catch(err => {
+  console.error('Error starting the application:', err);
+  process.exit(1);
+});
