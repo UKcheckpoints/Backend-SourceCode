@@ -6,6 +6,7 @@ import { PrismaModule } from './comman/database/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './helpers/logger/logger.module';
+import { MapModule } from './modules/map/map.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -14,7 +15,8 @@ import { LoggerModule } from './helpers/logger/logger.module';
     LoggerModule,
     PrismaModule,
     CommanModule,
-    AuthModule
+    AuthModule,
+    MapModule
   ],
   controllers: [AppController],
   providers: [AppService],

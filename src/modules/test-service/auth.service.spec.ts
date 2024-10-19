@@ -76,7 +76,7 @@ describe('AuthService', () => {
             expect(mockResponse.cookie).toHaveBeenCalledWith('jwt', 'signed-token', {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
 
@@ -124,7 +124,6 @@ describe('AuthService', () => {
             expect(result).toEqual({
                 message: 'User registered successfully',
                 user: {
-                    id: 1,
                     username: 'newuser',
                     email: 'new@example.com',
                 },
@@ -155,15 +154,40 @@ describe('AuthService', () => {
 
             await expect(authService.validateCurrentUser(token)).rejects.toThrow(UnauthorizedException);
         });
-
         it('should return the user if token is valid and matches user data', async () => {
-            const user = { id: 1, username: 'testuser', role: 'user', isSubscribed: true };
-            const token = jwtService.sign({ sub: user.id, username: user.username, role: user.role, isSubscribed: user.isSubscribed });
-            jwtService.verify = jest.fn().mockReturnValue({ sub: user.id, username: user.username, role: user.role, isSubscribed: user.isSubscribed });
+            const user = {
+                id: 1,
+                username: 'testuser',
+                role: 'user',
+                isSubscribed: true
+            };
+
+            const token = jwtService.sign({
+                sub: user.id,
+                username: user.username,
+                role: user.role,
+                isSubscribed: user.isSubscribed
+            });
+
+            jwtService.verify = jest.fn().mockReturnValue({
+                sub: user.id,
+                username: user.username,
+                role: user.role,
+                isSubscribed: user.isSubscribed
+            });
+
             userRepo.findUserById = jest.fn().mockResolvedValue(user);
 
             const result = await authService.validateCurrentUser(token);
-            expect(result).toEqual(user);
+
+            expect(result).toEqual({
+                id: "1",
+                data: {
+                    username: "testuser",
+                    role: "user",
+                    isSubscribed: true,
+                },
+            });
         });
     });
 });

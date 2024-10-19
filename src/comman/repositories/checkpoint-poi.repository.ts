@@ -7,9 +7,13 @@ export class CheckpointPOIRepository {
     constructor(private readonly prisma: PrismaService) { }
 
     async createCheckpointPOI(data: Omit<CheckpointPOIEntity, 'id' | 'lastUpdated'>): Promise<CheckpointPOIEntity> {
+        const { statusUpdatedById, ...restData } = data;
         const checkpointPOI = await this.prisma.checkpointPOI.create({
             data: {
-                ...data,
+                ...restData,
+                statusUpdatedBy: {
+                    connect: { id: statusUpdatedById }
+                }
             },
         });
         return new CheckpointPOIEntity(checkpointPOI);
