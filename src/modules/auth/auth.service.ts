@@ -34,12 +34,12 @@ export class AuthService {
         const { password: _, id, ...userData } = user;
         const token = this.jwtService.sign(
             {
-                sub: id,
+                sub: id.toString(),
                 username: userData.username,
                 role: userData.role,
                 isSubscribed: userData.isSubscribed,
             },
-            { expiresIn: '7d' } // Set token expiration
+            { expiresIn: '7d' }
         );
 
         res.cookie('jwt', token, {
