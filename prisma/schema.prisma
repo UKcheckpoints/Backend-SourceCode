@@ -1,0 +1,83 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                BigInt           @id @default(autoincrement()) @map("id")
+  username          String           @unique @map("username")
+  email             String           @unique @map("email")
+  password          String           @map("password")
+  role              Role             @default(USER) @map("role")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  freeDate          DateTime?        @map("free_date")
+  interval          String?          @map("interval")
+  isSubscribed      Boolean          @default(false) @map("is_subscribed")
+  stripeCustomer    String?          @map("stripe_customer")
+  freeEnd           Boolean          @default(false) @map("free_end")
+  CheckpointPOI     CheckpointPOI[]
+  CheckpointPass    CheckpointPass[]
+  Notifications     Notification[]   @relation("UserNotifications")
+  SentNotifications Notification[]   @relation("SentNotifications")
+
+  @@index([username], name: "idx_username")
+  @@index([email], name: "idx_email")
+  @@index([role, isSubscribed], name: "idx_role_subscription")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+  FRIEND
+}
+
+model CheckpointPOI {
+  id                BigInt           @id @default(autoincrement())
+  name              String
+  status            CheckpointStatus
+  latitude          Float            @map("latitude")
+  longitude         Float            @map("longitude")
+  lastUpdated       DateTime         @default(now()) @updatedAt @map("last_updated")
+  statusUpdatedBy   User             @relation(fields: [statusUpdatedById], references: [id])
+  statusUpdatedById BigInt
+  comment           String?
+
+  CheckpointPass CheckpointPass[]
+
+  @@index([status], name: "idx_status")
+}
+
+model CheckpointPass {
+  id           BigInt           @id @default(autoincrement())
+  user         User             @relation(fields: [userId], references: [id])
+  userId       BigInt
+  checkpoint   CheckpointPOI    @relation(fields: [checkpointId], references: [id])
+  checkpointId BigInt
+  passedAt     DateTime         @default(now()) @map("passed_at")
+  status       CheckpointStatus
+  comment      String?
+}
+
+model Notification {
+  id        BigInt   @id @default(autoincrement())
+  user      User?    @relation("UserNotifications", fields: [userId], references: [id])
+  userId    BigInt?
+  title     String
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+  sentBy    User     @relation("SentNotifications", fields: [sentById], references: [id])
+  sentById  BigInt
+}
+
+enum CheckpointStatus {
+  ACTIVE
+  INACTIVE
+  UNKNOWN
+}
