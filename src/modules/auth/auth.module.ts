@@ -5,6 +5,8 @@ import { UserRepository } from "src/comman/repositories/user.repository";
 import { PrismaService } from "src/comman/database/prisma/prisma.service";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtStrategy } from "./jwt.strategy";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 
 @Module({
     imports: [
@@ -17,7 +19,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
             })
         })
     ],
-    providers: [PrismaService, UserRepository, AuthService],
+    providers: [PrismaService, UserRepository, AuthService, JwtStrategy, JwtAuthGuard],
     controllers: [AuthController]
 })
 

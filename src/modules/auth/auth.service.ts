@@ -45,7 +45,7 @@ export class AuthService {
         res.cookie('jwt', token, {
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
@@ -103,6 +103,7 @@ export class AuthService {
 
         try {
             const { sub, username, role, isSubscribed } = this.jwtService.verify(token);
+
             const user = await this.userRepo.findUserById(sub);
 
             if (!user) {
@@ -117,7 +118,9 @@ export class AuthService {
                 throw new UnauthorizedException('Token data does not match user data.');
             }
 
-            return user;
+            const { id, ...data } = user;
+
+            return { data, id: id.toString() };
         } catch (err) {
             throw new UnauthorizedException('Invalid token.');
         }
