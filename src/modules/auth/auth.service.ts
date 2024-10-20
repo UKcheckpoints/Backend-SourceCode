@@ -2,6 +2,7 @@ import {
     BadRequestException,
     ConflictException,
     Injectable,
+    NotFoundException,
     UnauthorizedException,
     UnprocessableEntityException,
 } from "@nestjs/common";
@@ -9,12 +10,16 @@ import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { UserRepository } from "../../comman/repositories/user.repository";
 import { RegisterDto, signInDto } from "../../types/auth.types";
+import sgMail from "@sendgrid/mail";
+import { v4 as uuidv4 } from 'uuid';
+import { PasswordResetRepository } from "src/comman/repositories/passwordreset.repository";
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userRepo: UserRepository,
-        private readonly jwtService: JwtService
+        private readonly jwtService: JwtService,
+        private readonly passwordResetRepo: PasswordResetRepository
     ) { }
 
     async signIn({ username, password }: signInDto, res: Response) {
@@ -125,4 +130,62 @@ export class AuthService {
             throw new UnauthorizedException('Invalid token.');
         }
     }
+
+    async requestPasswordReset(email: string) {
+        const user = await this.userRepo.findUserByEmail(email);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const resetToken = uuidv4();
+        const expiresAt = new Date(Date.now() + 3600000);
+
+        await this.passwordResetRepo.createPasswordReset({
+            userId: user.id,
+            token: resetToken,
+            expiresAt
+        });
+
+        const resetLink = `${process.env.ORIGIN}/reset-password?token=${resetToken}`;
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+        const msg = {
+            to: email,
+            from: { email: 'info@ukcheckpoints.info', name: 'noreply' },
+            templateId: process.env.SENDGRID_RESET_PASSWORD_TEMPLATE_ID,
+            dynamicTemplateData: {
+                reset_password_link: resetLink,
+            },
+        };
+
+        await sgMail.send(msg);
+
+        return { message: 'Password reset email sent successfully' };
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        const passwordReset = await this.passwordResetRepo.findPasswordResetByToken(token);
+        if (!passwordReset) {
+            throw new NotFoundException('Invalid or expired password reset token');
+        }
+
+        if (passwordReset.expiresAt < new Date()) {
+            await this.passwordResetRepo.deletePasswordReset(passwordReset.id);
+            throw new BadRequestException('Password reset token has expired');
+        }
+
+        const user = await this.userRepo.findUserById(passwordReset.userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (newPassword.length < 8) {
+            throw new BadRequestException('Password must be at least 8 characters long');
+        }
+
+        await this.userRepo.updateUser(user.id, { password: newPassword });
+        await this.passwordResetRepo.deletePasswordReset(passwordReset.id);
+
+        return { message: 'Password has been reset successfully' };
+    }
+
 }

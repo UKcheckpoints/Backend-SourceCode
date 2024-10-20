@@ -1,24 +1,47 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../auth/auth.service';
 import { UserRepository } from '../../comman/repositories/user.repository';
+import { PasswordResetRepository } from '../../comman/repositories/passwordreset.repository';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, ConflictException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { Response } from 'express';
 import { RegisterDto, signInDto } from '../../types/auth.types';
+import sgMail from '@sendgrid/mail';
+import { v4 as uuidv4 } from 'uuid';
+
+jest.mock('@sendgrid/mail', () => ({
+    setApiKey: jest.fn(),
+    send: jest.fn(),
+}));
+
+jest.mock('uuid', () => ({
+    v4: jest.fn(),
+}));
 
 describe('AuthService', () => {
     let authService: AuthService;
     let userRepo: UserRepository;
+    let passwordResetRepo: PasswordResetRepository;
     let jwtService: JwtService;
 
     const mockUserRepo = {
         findUserByUsername: jest.fn(),
         findUserByUsernameOrEmail: jest.fn(),
         createUser: jest.fn(),
+        findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
+        updateUser: jest.fn(),
+    };
+
+    const mockPasswordResetRepo = {
+        createPasswordReset: jest.fn(),
+        findPasswordResetByToken: jest.fn(),
+        deletePasswordReset: jest.fn(),
     };
 
     const mockJwtService = {
         sign: jest.fn(),
+        verify: jest.fn(),
     };
 
     const mockResponse: Partial<Response> = {
@@ -30,13 +53,18 @@ describe('AuthService', () => {
             providers: [
                 AuthService,
                 { provide: UserRepository, useValue: mockUserRepo },
+                { provide: PasswordResetRepository, useValue: mockPasswordResetRepo },
                 { provide: JwtService, useValue: mockJwtService },
             ],
         }).compile();
 
         authService = module.get<AuthService>(AuthService);
         userRepo = module.get<UserRepository>(UserRepository);
+        passwordResetRepo = module.get<PasswordResetRepository>(PasswordResetRepository);
         jwtService = module.get<JwtService>(JwtService);
+
+        process.env.FRONTEND_URL = 'http://example.com';
+        process.env.SENDGRID_RESET_PASSWORD_TEMPLATE_ID = 'template-id';
     });
 
     afterEach(() => {
@@ -190,4 +218,117 @@ describe('AuthService', () => {
             });
         });
     });
+
+    describe('requestPasswordReset', () => {
+        it('should throw NotFoundException if user is not found', async () => {
+            mockUserRepo.findUserByEmail.mockResolvedValue(null);
+
+            await expect(authService.requestPasswordReset('nonexistent@example.com'))
+                .rejects.toThrow(NotFoundException);
+        });
+
+        it('should create a password reset token and send an email', async () => {
+            const mockUser = { id: BigInt(1), email: 'test@example.com' };
+            mockUserRepo.findUserByEmail.mockResolvedValue(mockUser);
+
+            const mockUuid = 'mock-uuid';
+            (uuidv4 as jest.Mock).mockReturnValue(mockUuid);
+
+            await authService.requestPasswordReset('test@example.com');
+
+            expect(mockPasswordResetRepo.createPasswordReset).toHaveBeenCalledWith({
+                userId: mockUser.id,
+                token: mockUuid,
+                expiresAt: expect.any(Date),
+            });
+
+            expect(sgMail.send).toHaveBeenCalledWith({
+                to: 'test@example.com',
+                from: { email: 'info@ukcheckpoints.info', name: 'noreply' },
+                templateId: 'template-id',
+                dynamicTemplateData: {
+                    reset_password_link: `http://example.com/reset-password?token=${mockUuid}`,
+                },
+            });
+        });
+
+        it('should return a success message', async () => {
+            mockUserRepo.findUserByEmail.mockResolvedValue({ id: BigInt(1), email: 'test@example.com' });
+
+            const result = await authService.requestPasswordReset('test@example.com');
+
+            expect(result).toEqual({ message: 'Password reset email sent successfully' });
+        });
+
+        it('should throw an error if email sending fails', async () => {
+            mockUserRepo.findUserByEmail.mockResolvedValue({ id: BigInt(1), email: 'test@example.com' });
+            (sgMail.send as jest.Mock).mockRejectedValue(new Error('Email sending failed'));
+
+            await expect(authService.requestPasswordReset('test@example.com'))
+                .rejects.toThrow('Email sending failed');
+        });
+    });
+
+    describe('resetPassword', () => {
+        it('should reset the password successfully', async () => {
+            const mockToken = 'valid-token';
+            const mockNewPassword = 'newPassword123';
+            const mockPasswordReset = {
+                id: BigInt(1),
+                userId: BigInt(1),
+                token: mockToken,
+                expiresAt: new Date(Date.now() + 3600000),
+            };
+            const mockUser = { id: BigInt(1), email: 'test@example.com' };
+
+            mockPasswordResetRepo.findPasswordResetByToken.mockResolvedValue(mockPasswordReset);
+            mockUserRepo.findUserById.mockResolvedValue(mockUser);
+            mockUserRepo.updateUser.mockResolvedValue({ ...mockUser, password: mockNewPassword });
+            mockPasswordResetRepo.deletePasswordReset.mockResolvedValue(null);
+
+            const result = await authService.resetPassword(mockToken, mockNewPassword);
+
+            expect(result).toEqual({ message: 'Password has been reset successfully' });
+            expect(mockUserRepo.updateUser).toHaveBeenCalledWith(mockUser.id, { password: mockNewPassword });
+            expect(mockPasswordResetRepo.deletePasswordReset).toHaveBeenCalledWith(mockPasswordReset.id);
+        });
+
+        it('should throw NotFoundException for invalid token', async () => {
+            mockPasswordResetRepo.findPasswordResetByToken.mockResolvedValue(null);
+
+            await expect(authService.resetPassword('invalid-token', 'newPassword123'))
+                .rejects.toThrow(NotFoundException);
+        });
+
+        it('should throw BadRequestException for expired token', async () => {
+            const mockExpiredPasswordReset = {
+                id: BigInt(1),
+                userId: BigInt(1),
+                token: 'expired-token',
+                expiresAt: new Date(Date.now() - 3600000),
+            };
+
+            mockPasswordResetRepo.findPasswordResetByToken.mockResolvedValue(mockExpiredPasswordReset);
+
+            await expect(authService.resetPassword('expired-token', 'newPassword123'))
+                .rejects.toThrow(BadRequestException);
+        });
+
+        it('should throw BadRequestException for short password', async () => {
+            const mockPasswordReset = {
+                id: BigInt(1),
+                userId: BigInt(1),
+                token: 'valid-token',
+                expiresAt: new Date(Date.now() + 3600000),
+            };
+            const mockUser = { id: BigInt(1), email: 'test@example.com' };
+
+            mockPasswordResetRepo.findPasswordResetByToken.mockResolvedValue(mockPasswordReset);
+            mockUserRepo.findUserById.mockResolvedValue(mockUser);
+
+            await expect(authService.resetPassword('valid-token', 'short'))
+                .rejects.toThrow(BadRequestException);
+        });
+    });
+
 });
