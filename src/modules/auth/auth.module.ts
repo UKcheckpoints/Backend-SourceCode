@@ -7,6 +7,7 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtStrategy } from "./jwt.strategy";
 import { JwtAuthGuard } from "./jwt-auth.guard";
+import { PasswordResetRepository } from "src/comman/repositories/passwordreset.repository";
 
 @Module({
     imports: [
@@ -19,7 +20,7 @@ import { JwtAuthGuard } from "./jwt-auth.guard";
             })
         })
     ],
-    providers: [PrismaService, UserRepository, AuthService, JwtStrategy, JwtAuthGuard],
+    providers: [PrismaService, UserRepository, AuthService, JwtStrategy, JwtAuthGuard, PasswordResetRepository],
     controllers: [AuthController]
 })
 
