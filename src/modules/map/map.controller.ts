@@ -6,7 +6,7 @@ import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('map')
-@UseGuards(JwtAuthGuard)
+//@UseGuards(JwtAuthGuard)
 export class MapController {
     constructor(private readonly mapService: MapService) { }
 

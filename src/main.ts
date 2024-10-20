@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import * as cors from 'cors';
 import { RequestLoggingInterceptor } from './utils/globalReqLogger';
 import * as cookieParser from 'cookie-parser';
+import { BigIntSerializerMiddleware } from './middleware/bigint-serializer.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,6 +11,8 @@ async function bootstrap() {
   if (environment !== 'production' && environment !== 'prod') {
     app.useGlobalInterceptors(new RequestLoggingInterceptor());
   }
+
+  app.use(new BigIntSerializerMiddleware().use);
 
   app.use(cors({
     origin: process.env.ORIGIN || '*',
