@@ -182,7 +182,7 @@ export class AuthService {
             throw new BadRequestException('Password must be at least 8 characters long');
         }
 
-        await this.userRepo.updateUser(user.id, { password: newPassword });
+        await this.userRepo.updateUser(user.id, { password: newPassword, updatedAt: new Date() });
         await this.passwordResetRepo.deletePasswordReset(passwordReset.id);
 
         return { message: 'Password has been reset successfully' };

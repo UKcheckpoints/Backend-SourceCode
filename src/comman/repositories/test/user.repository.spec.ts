@@ -52,7 +52,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'create').mockResolvedValue(createdUser);
@@ -83,7 +84,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(foundUser);
@@ -117,7 +119,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
 
@@ -144,7 +147,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(foundUser);
@@ -188,7 +192,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(foundUser);
@@ -238,7 +243,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'update').mockResolvedValue(updatedUser);
@@ -263,7 +269,8 @@ describe('UserRepository', () => {
             freeDate: new Date(),
             interval: 'monthly',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            stripeSubscribedDate: new Date()
         };
 
         jest.spyOn(prismaService.user, 'delete').mockResolvedValue(deletedUser);
@@ -288,7 +295,8 @@ describe('UserRepository', () => {
                 freeDate: new Date(),
                 interval: 'monthly',
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                stripeSubscribedDate: new Date()
             },
             {
                 id: BigInt(2),
@@ -302,7 +310,8 @@ describe('UserRepository', () => {
                 freeDate: new Date(),
                 interval: 'monthly',
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                stripeSubscribedDate: new Date()
             },
         ];
 

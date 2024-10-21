@@ -281,15 +281,22 @@ describe('AuthService', () => {
             };
             const mockUser = { id: BigInt(1), email: 'test@example.com' };
 
+            const updatedAt = new Date();
+
             mockPasswordResetRepo.findPasswordResetByToken.mockResolvedValue(mockPasswordReset);
             mockUserRepo.findUserById.mockResolvedValue(mockUser);
-            mockUserRepo.updateUser.mockResolvedValue({ ...mockUser, password: mockNewPassword });
+            mockUserRepo.updateUser.mockResolvedValue({ ...mockUser, password: mockNewPassword, updatedAt });
             mockPasswordResetRepo.deletePasswordReset.mockResolvedValue(null);
 
             const result = await authService.resetPassword(mockToken, mockNewPassword);
 
             expect(result).toEqual({ message: 'Password has been reset successfully' });
-            expect(mockUserRepo.updateUser).toHaveBeenCalledWith(mockUser.id, { password: mockNewPassword });
+
+            expect(mockUserRepo.updateUser).toHaveBeenCalledWith(mockUser.id, {
+                password: mockNewPassword,
+                updatedAt,
+            });
+
             expect(mockPasswordResetRepo.deletePasswordReset).toHaveBeenCalledWith(mockPasswordReset.id);
         });
 

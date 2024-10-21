@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './helpers/logger/logger.module';
 import { MapModule } from './modules/map/map.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -18,7 +19,8 @@ import { AdminModule } from './modules/admin/admin.module';
     CommanModule,
     AuthModule,
     MapModule,
-    AdminModule
+    AdminModule,
+    StripeModule
   ],
   controllers: [AppController],
   providers: [AppService],

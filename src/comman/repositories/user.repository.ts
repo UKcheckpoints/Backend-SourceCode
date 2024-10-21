@@ -68,4 +68,11 @@ export class UserRepository {
         const users = await this.prisma.user.findMany();
         return users.map(user => new UserEntity(user));
     }
+
+    async findUserByCustomerId(customerId: string): Promise<UserEntity | null> {
+        const user = await this.prisma.user.findFirst({
+            where: { stripeCustomer: customerId },
+        });
+        return user ? new UserEntity(user) : null;
+    }
 }

@@ -4,6 +4,7 @@ import * as cors from 'cors';
 import { RequestLoggingInterceptor } from './utils/globalReqLogger';
 import * as cookieParser from 'cookie-parser';
 import { BigIntSerializerMiddleware } from './middleware/bigint-serializer.middleware';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,11 @@ async function bootstrap() {
   }));
 
   app.use(cookieParser())
+
+  app.use(
+    '/stripe/webhook',
+    bodyParser.raw({ type: 'application/json' }),
+  );
   const port = Number(process.env.PORT) || 3000;
   await app.listen(port);
 }
