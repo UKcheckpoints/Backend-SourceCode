@@ -1,5 +1,5 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 import { MessageType } from 'src/types/websocket.types';
 import { WebsocketService } from './websocket.service';
 
@@ -13,7 +13,10 @@ export class WebsocketController {
     constructor(private websocketService: WebsocketService) { }
 
     @SubscribeMessage('message')
-    handleMessage(@MessageBody() message: MessageType): void {
-        this.websocketService.handleMessage(message);
+    async handleMessage(
+        @MessageBody() message: MessageType,
+        @ConnectedSocket() client: Socket
+    ): Promise<void> {
+        await this.websocketService.handleMessage(message, this.server, client);
     }
 }
