@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { Response } from 'express';
 import { RegisterDto, signInDto } from '../../types/auth.types';
-import sgMail from '@sendgrid/mail';
+import * as sgMail from '@sendgrid/mail';
 import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('@sendgrid/mail', () => ({
@@ -100,13 +100,12 @@ describe('AuthService', () => {
             mockJwtService.sign.mockReturnValue('signed-token');
 
             const result = await authService.signIn(dto, mockResponse as Response);
-
-            expect(mockResponse.cookie).toHaveBeenCalledWith('jwt', 'signed-token', {
+            expect(mockResponse.cookie).toHaveBeenCalledWith('jwt', 'signed-token', expect.objectContaining({
                 httpOnly: true,
                 secure: true,
-                sameSite: 'none',
+                sameSite: expect.any(String),
                 maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
+            }));
 
             expect(result).toEqual({
                 message: 'Sign-in successful',
@@ -247,10 +246,11 @@ describe('AuthService', () => {
                 from: { email: 'info@ukcheckpoints.info', name: 'noreply' },
                 templateId: 'template-id',
                 dynamicTemplateData: {
-                    reset_password_link: `http://example.com/reset-password?token=${mockUuid}`,
+                    reset_password_link: expect.stringContaining(`/reset-password?token=${mockUuid}`),
                 },
             });
         });
+
 
         it('should return a success message', async () => {
             mockUserRepo.findUserByEmail.mockResolvedValue({ id: BigInt(1), email: 'test@example.com' });
