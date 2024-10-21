@@ -293,6 +293,150 @@ Enum with values: `'ACTIVE'`, `'INACTIVE'`, `'UNKNOWN'`
 
 Note: Specific error messages will be included in the response body.
 
+# AdminController
+
+## Endpoints
+
+### 1. Get All Checkpoints
+
+#### **Endpoint:**
+
+```http
+GET /admin/checkpoints
 ```
 
+#### **Description:**
+
+Returns a list of all **Checkpoints** available in the system.
+
+#### **Response:**
+
+- **200 OK:**
+
+  - Returns an array of `CheckpointPOIEntity` objects.
+  - Example Response:
+
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "Checkpoint A",
+        "status": "ACTIVE",
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "lastUpdated": "2024-10-20T14:32:28.123Z",
+        "statusUpdatedById": 12,
+        "comment": "Status updated due to maintenance."
+      },
+      ...
+    ]
+    ```
+
+- **401 Unauthorized:**
+
+  - If the user is not authenticated or doesn't have admin access.
+  - Example Response:
+
+    ```json
+    {
+      "statusCode": 401,
+      "message": "Admin access required"
+    }
+    ```
+
+#### **Error Handling:**
+
+- **UnauthorizedException** is thrown when the request doesn't contain a valid admin-level JWT token.
+
+#### **Input:**
+
+- **Headers:**
+  - JWT token must be included as a cookie (`req.cookies.jwt`).
+
+#### **Entities Returned:**
+
+- **CheckpointPOIEntity**
+  - `id`: bigint — Unique ID of the checkpoint.
+  - `name`: string — Name of the checkpoint.
+  - `status`: `CheckpointStatus` — Current status of the checkpoint.
+  - `latitude`: number — Latitude of the checkpoint.
+  - `longitude`: number — Longitude of the checkpoint.
+  - `lastUpdated`: Date — Timestamp of the last update.
+  - `statusUpdatedById`: bigint — ID of the user who updated the checkpoint status.
+  - `comment`: string (optional) — Additional comments.
+
+---
+
+### 2. Get All Users
+
+#### **Endpoint:**
+
+```http
+GET /admin/users
 ```
+
+#### **Description:**
+
+Fetches and returns a list of all **Users** in the system.
+
+#### **Response:**
+
+- **200 OK:**
+
+  - Returns an array of `UserEntity` objects.
+  - Example Response:
+
+    ```json
+    [
+      {
+        "id": 1,
+        "username": "adminUser",
+        "email": "admin@example.com",
+        "role": "ADMIN",
+        "createdAt": "2024-09-01T14:32:28.123Z",
+        "updatedAt": "2024-10-20T12:22:45.789Z",
+        "isSubscribed": true,
+        "stripeCustomer": "cus_123ABC",
+        "stripeSubscribedDate": "2024-09-15T10:45:00.000Z",
+        "freeEnd": false
+      },
+      ...
+    ]
+    ```
+
+- **401 Unauthorized:**
+
+  - If the user is not authenticated or doesn't have admin access.
+  - Example Response:
+
+    ```json
+    {
+      "statusCode": 401,
+      "message": "Admin access required"
+    }
+    ```
+
+#### **Error Handling:**
+
+- **UnauthorizedException** is thrown when the request doesn't contain a valid admin-level JWT token.
+
+#### **Input:**
+
+- **Headers:**
+  - JWT token must be included as a cookie (`req.cookies.jwt`).
+
+#### **Entities Returned:**
+
+- **UserEntity**
+  - `id`: bigint — Unique ID of the user.
+  - `username`: string — Username of the user.
+  - `email`: string — Email address of the user.
+  - `role`: `Role` — Role of the user (e.g., `ADMIN`, `USER`).
+  - `createdAt`: Date — Account creation timestamp.
+  - `updatedAt`: Date — Timestamp of the last account update.
+  - `isSubscribed`: boolean — Whether the user is subscribed to a plan.
+  - `stripeCustomer`: string (optional) — Stripe customer ID.
+  - `stripeSubscribedDate`: Date (optional) — Date when the subscription started.
+  - `freeEnd`: boolean — Whether the user’s free trial has ended.
+
+---

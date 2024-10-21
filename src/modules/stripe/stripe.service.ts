@@ -25,6 +25,7 @@ export class StripeService {
 
         let event: Stripe.Event;
 
+        // Verify the webhook signature
         try {
             event = this.stripe.webhooks.constructEvent(req.body, sig, this.webhookSecret);
         } catch (err) {
@@ -32,6 +33,7 @@ export class StripeService {
             throw new Error('Webhook Error: Invalid Signature');
         }
 
+        // Handle the event based on its type
         switch (event.type) {
             case 'payment_intent.succeeded':
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
