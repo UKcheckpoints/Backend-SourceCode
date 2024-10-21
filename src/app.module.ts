@@ -9,6 +9,7 @@ import { LoggerModule } from './helpers/logger/logger.module';
 import { MapModule } from './modules/map/map.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { StripeModule } from './modules/stripe/stripe.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -20,7 +21,8 @@ import { StripeModule } from './modules/stripe/stripe.module';
     AuthModule,
     MapModule,
     AdminModule,
-    StripeModule
+    StripeModule,
+    WebsocketModule
   ],
   controllers: [AppController],
   providers: [AppService],
