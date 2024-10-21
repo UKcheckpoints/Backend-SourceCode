@@ -21,7 +21,8 @@ import { PasswordResetRepository } from "src/comman/repositories/passwordreset.r
         })
     ],
     providers: [PrismaService, UserRepository, AuthService, JwtStrategy, JwtAuthGuard, PasswordResetRepository],
-    controllers: [AuthController]
+    controllers: [AuthController],
+    exports: [AuthService]
 })
 
 export class AuthModule { }

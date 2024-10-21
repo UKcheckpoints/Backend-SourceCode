@@ -30,7 +30,6 @@ export class UserRepository {
         return user ? new UserEntity(user) : null;
     }
 
-    // Find a user by their username
     async findUserByUsername(username: string): Promise<UserEntity | null> {
         const user = await this.prisma.user.findUnique({
             where: { username },

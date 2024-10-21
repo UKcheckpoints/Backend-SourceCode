@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './helpers/logger/logger.module';
 import { MapModule } from './modules/map/map.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -16,7 +17,8 @@ import { MapModule } from './modules/map/map.module';
     PrismaModule,
     CommanModule,
     AuthModule,
-    MapModule
+    MapModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],

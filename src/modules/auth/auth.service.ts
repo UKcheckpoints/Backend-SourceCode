@@ -10,7 +10,7 @@ import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { UserRepository } from "../../comman/repositories/user.repository";
 import { RegisterDto, signInDto } from "../../types/auth.types";
-import sgMail from "@sendgrid/mail";
+import * as sgMail from "@sendgrid/mail";
 import { v4 as uuidv4 } from 'uuid';
 import { PasswordResetRepository } from "src/comman/repositories/passwordreset.repository";
 
