@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { CheckpointPOIRepository } from 'src/comman/repositories/checkpoint-poi.repository';
 import { UserRepository } from 'src/comman/repositories/user.repository';
@@ -114,6 +114,63 @@ describe('AdminService', () => {
             authService.validateCurrentUser.mockResolvedValue({ data: mockUser('USER'), id: '1' });
 
             await expect(adminService.getAllUsers('token')).rejects.toThrow(UnauthorizedException);
+        });
+    });
+
+    describe('deleteUser', () => {
+        it('should delete a user when admin is authenticated', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('ADMIN'), id: '1' });
+            userRepository.findUserById = jest.fn().mockResolvedValue(mockUser('USER'));
+            userRepository.deleteUser = jest.fn().mockResolvedValue(undefined);
+
+            await expect(adminService.deleteUser('1', 'token')).resolves.not.toThrow();
+            expect(userRepository.deleteUser).toHaveBeenCalledWith(BigInt(1));
+        });
+
+        it('should throw UnauthorizedException for non-admin', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('USER'), id: '1' });
+
+            await expect(adminService.deleteUser('1', 'token')).rejects.toThrow(UnauthorizedException);
+        });
+
+        it('should throw NotFoundException when user does not exist', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('ADMIN'), id: '1' });
+            userRepository.findUserById = jest.fn().mockResolvedValue(null);
+
+            await expect(adminService.deleteUser('1', 'token')).rejects.toThrow(NotFoundException);
+        });
+    });
+
+    describe('updateUserRole', () => {
+        it('should update user role when admin is authenticated', async () => {
+            const updatedUser = { ...mockUser('USER'), role: 'ADMIN' as Role };
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('ADMIN'), id: '1' });
+            userRepository.findUserById = jest.fn().mockResolvedValue(mockUser('USER'));
+            userRepository.updateUser = jest.fn().mockResolvedValue(updatedUser);
+
+            const result = await adminService.updateUserRole('1', 'ADMIN', 'token');
+            expect(result).toEqual(updatedUser);
+            expect(userRepository.updateUser).toHaveBeenCalledWith(BigInt(1), { role: 'ADMIN' });
+        });
+
+        it('should throw UnauthorizedException for non-admin', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('USER'), id: '1' });
+
+            await expect(adminService.updateUserRole('1', 'ADMIN', 'token')).rejects.toThrow(UnauthorizedException);
+        });
+
+        it('should throw NotFoundException when user does not exist', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('ADMIN'), id: '1' });
+            userRepository.findUserById = jest.fn().mockResolvedValue(null);
+
+            await expect(adminService.updateUserRole('1', 'ADMIN', 'token')).rejects.toThrow(NotFoundException);
+        });
+
+        it('should handle invalid role input', async () => {
+            authService.validateCurrentUser.mockResolvedValue({ data: mockUser('ADMIN'), id: '1' });
+            userRepository.findUserById = jest.fn().mockResolvedValue(mockUser('USER'));
+
+            await expect(adminService.updateUserRole('1', 'INVALID_ROLE', 'token')).rejects.toThrow();
         });
     });
 });

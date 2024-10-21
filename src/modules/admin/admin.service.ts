@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, NotFoundException } from "@nestjs/common";
 import { AuthService } from "../auth/auth.service";
 import { CheckpointPOIRepository } from "src/comman/repositories/checkpoint-poi.repository";
 import { CheckpointPOIEntity } from "src/comman/entities/checkpoint-poi.entity";
 import { UserRepository } from "src/comman/repositories/user.repository";
 import { UserEntity } from "src/comman/entities/user.entity";
+import { Role } from "@prisma/client";
 
 @Injectable()
 export class AdminService {
@@ -31,6 +32,31 @@ export class AdminService {
         if (!isAdmin) {
             throw new UnauthorizedException('Admin access required');
         }
-        return this.userRepository.findAllUsers();
+        return await this.userRepository.findAllUsers();
+    }
+
+    async deleteUser(id: string, token: string): Promise<void> {
+        const isAdmin = await this.validateAdmin(token);
+        if (!isAdmin) {
+            throw new UnauthorizedException('Admin access required');
+        }
+        const user = await this.userRepository.findUserById(BigInt(id));
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        await this.userRepository.deleteUser(BigInt(id));
+    }
+
+    async updateUserRole(id: string, role: string, token: string): Promise<UserEntity> {
+        const isAdmin = await this.validateAdmin(token);
+        if (!isAdmin) {
+            throw new UnauthorizedException('Admin access required');
+        }
+        const user = await this.userRepository.findUserById(BigInt(id));
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        user.role = role as Role;
+        return await this.userRepository.updateUser(BigInt(id), { role: user.role });
     }
 }

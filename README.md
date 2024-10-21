@@ -440,3 +440,69 @@ Fetches and returns a list of all **Users** in the system.
   - `freeEnd`: boolean — Whether the user’s free trial has ended.
 
 ---
+
+### Delete User
+
+Deletes a user from the system.
+
+- **URL:** `/admin/users/:id`
+- **Method:** `DELETE`
+- **URL Params:**
+  - `id`: The ID of the user to be deleted
+- **Headers:**
+  - `Cookie`: Must contain a valid JWT token in the `jwt` cookie
+- **Success Response:**
+  - **Code:** 200
+  - **Content:** No content
+- **Error Responses:**
+  - **Code:** 401 UNAUTHORIZED
+    - **Content:** `{ "message": "Admin access required" }`
+  - **Code:** 404 NOT FOUND
+    - **Content:** `{ "message": "User not found" }`
+
+#### Example
+
+```http
+DELETE /admin/users/123
+Cookie: jwt=your_jwt_token_here
+```
+
+### Update User Role
+
+Updates the role of a specified user.
+
+- **URL:** `/admin/users/:id/role`
+- **Method:** `PUT`
+- **URL Params:**
+  - `id`: The ID of the user whose role is to be updated
+- **Headers:**
+  - `Cookie`: Must contain a valid JWT token in the `jwt` cookie
+- **Data Params:**
+  - `role`: The new role to assign to the user (e.g., "ADMIN", "USER")
+- **Success Response:**
+  - **Code:** 200
+  - **Content:** `{ user }` (Updated user object)
+- **Error Responses:**
+  - **Code:** 401 UNAUTHORIZED
+    - **Content:** `{ "message": "Admin access required" }`
+  - **Code:** 404 NOT FOUND
+    - **Content:** `{ "message": "User not found" }`
+
+#### Example
+
+```http
+PUT /admin/users/123/role
+Cookie: jwt=your_jwt_token_here
+Content-Type: application/json
+
+{
+  "role": "ADMIN"
+}
+```
+
+### Notes
+
+- Both endpoints require admin privileges. The JWT token in the cookie is used for authentication and authorization.
+- If a non-admin user attempts to access these endpoints, a 401 Unauthorized error will be returned.
+- If the specified user ID does not exist, a 404 Not Found error will be returned.
+- For the Update User Role endpoint, ensure that the `role` provided in the request body is a valid role in your system.
