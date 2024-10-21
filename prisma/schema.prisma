@@ -9,22 +9,24 @@ datasource db {
 }
 
 model User {
-  id                BigInt           @id @default(autoincrement()) @map("id")
-  username          String           @unique @map("username")
-  email             String           @unique @map("email")
-  password          String           @map("password")
-  role              Role             @default(USER) @map("role")
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @updatedAt @map("updated_at")
-  freeDate          DateTime?        @map("free_date")
-  interval          String?          @map("interval")
-  isSubscribed      Boolean          @default(false) @map("is_subscribed")
-  stripeCustomer    String?          @map("stripe_customer")
-  freeEnd           Boolean          @default(false) @map("free_end")
-  CheckpointPOI     CheckpointPOI[]
-  CheckpointPass    CheckpointPass[]
-  Notifications     Notification[]   @relation("UserNotifications")
-  SentNotifications Notification[]   @relation("SentNotifications")
+  id                   BigInt           @id @default(autoincrement()) @map("id")
+  username             String           @unique @map("username")
+  email                String           @unique @map("email")
+  password             String           @map("password")
+  role                 Role             @default(USER) @map("role")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  freeDate             DateTime?        @map("free_date")
+  interval             String?          @map("interval")
+  isSubscribed         Boolean          @default(false) @map("is_subscribed")
+  stripeCustomer       String?          @map("stripe_customer")
+  freeEnd              Boolean          @default(false) @map("free_end")
+  stripeSubscribedDate DateTime?
+  CheckpointPOI        CheckpointPOI[]
+  CheckpointPass       CheckpointPass[]
+  Notifications        Notification[]   @relation("UserNotifications")
+  SentNotifications    Notification[]   @relation("SentNotifications")
+  passwordResets       PasswordReset[]
 
   @@index([username], name: "idx_username")
   @@index([email], name: "idx_email")
@@ -80,4 +82,13 @@ enum CheckpointStatus {
   ACTIVE
   INACTIVE
   UNKNOWN
+}
+
+model PasswordReset {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }

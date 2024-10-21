@@ -12,6 +12,7 @@ export class UserEntity {
     interval?: string;
     isSubscribed: boolean;
     stripeCustomer?: string;
+    stripeSubscribedDate?: Date;
     freeEnd: boolean;
 
     constructor(data: Partial<UserEntity>) {

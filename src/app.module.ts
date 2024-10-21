@@ -6,6 +6,9 @@ import { PrismaModule } from './comman/database/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from './helpers/logger/logger.module';
+import { MapModule } from './modules/map/map.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -14,7 +17,10 @@ import { LoggerModule } from './helpers/logger/logger.module';
     LoggerModule,
     PrismaModule,
     CommanModule,
-    AuthModule
+    AuthModule,
+    MapModule,
+    AdminModule,
+    StripeModule
   ],
   controllers: [AppController],
   providers: [AppService],

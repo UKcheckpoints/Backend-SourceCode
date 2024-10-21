@@ -51,8 +51,12 @@ describe('CheckpointPOIRepository', () => {
                 status: mockCheckpointPOIData.status,
                 latitude: mockCheckpointPOIData.latitude,
                 longitude: mockCheckpointPOIData.longitude,
-                statusUpdatedById: mockCheckpointPOIData.statusUpdatedById,
                 comment: mockCheckpointPOIData.comment,
+                statusUpdatedBy: {
+                    connect: {
+                        id: mockCheckpointPOIData.statusUpdatedById,
+                    },
+                },
             },
         });
     });

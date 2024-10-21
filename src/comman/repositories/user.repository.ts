@@ -30,7 +30,6 @@ export class UserRepository {
         return user ? new UserEntity(user) : null;
     }
 
-    // Find a user by their username
     async findUserByUsername(username: string): Promise<UserEntity | null> {
         const user = await this.prisma.user.findUnique({
             where: { username },
@@ -68,5 +67,12 @@ export class UserRepository {
     async findAllUsers(): Promise<UserEntity[]> {
         const users = await this.prisma.user.findMany();
         return users.map(user => new UserEntity(user));
+    }
+
+    async findUserByCustomerId(customerId: string): Promise<UserEntity | null> {
+        const user = await this.prisma.user.findFirst({
+            where: { stripeCustomer: customerId },
+        });
+        return user ? new UserEntity(user) : null;
     }
 }

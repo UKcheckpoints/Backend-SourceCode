@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post, Req, Res, UnauthorizedException, UnprocessableEntityException, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Req, Res, UnauthorizedException, UnprocessableEntityException, UseGuards } from "@nestjs/common";
 import { Response, Request } from 'express';
 import { RegisterDto, signInDto } from "src/types/auth.types";
 import { AuthService } from "./auth.service";
@@ -38,7 +38,7 @@ export class AuthController {
         }
     }
 
-    @Post('validate-jwt')
+    @Get('validate-jwt')
     @UseGuards(JwtAuthGuard)
     async validateJwt(@Req() req: Request, @Res() res: Response) {
         const token = req.cookies.jwt;
@@ -50,7 +50,27 @@ export class AuthController {
                 userData,
             });
         } catch (err) {
+            console.log(err)
             throw new UnauthorizedException('Invalid token.');
         }
     }
+
+    @Post('password-reset')
+    async requestPasswordReset(@Body('email') email: string) {
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+        const result = await this.authServ.requestPasswordReset(email);
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Password reset email sent successfully',
+            data: result
+        };
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() data: { token: string; password: string }) {
+        return this.authServ.resetPassword(data.token, data.password);
+    }
+
 }
